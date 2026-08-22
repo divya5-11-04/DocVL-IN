@@ -33,5 +33,5 @@ training:
   seed: 42
 
 logging:
-  use_wandb: true
+  use_wandb: false
   project_name: "docvl-in"
