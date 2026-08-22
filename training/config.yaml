@@ -1,0 +1,37 @@
+# DocVL-IN fine-tuning config
+
+model:
+  base_model: "Qwen/Qwen2-VL-2B-Instruct"   # swap for PaliGemma / InternVL2 to compare architectures
+  load_in_4bit: true                          # QLoRA — needed to fit on a single 16GB GPU
+
+data:
+  train_manifest: "data/processed/train.jsonl"
+  val_manifest: "data/processed/val.jsonl"
+  image_root: "data/processed"
+  max_image_size: 896                          # resize longer side to this before encoding
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]  # attention projections only, to start
+
+training:
+  output_dir: "training/output"
+  num_train_epochs: 3
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8               # effective batch size 16
+  learning_rate: 2.0e-4
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.03
+  logging_steps: 10
+  eval_steps: 100
+  save_steps: 100
+  save_total_limit: 3
+  bf16: true
+  max_grad_norm: 1.0
+  seed: 42
+
+logging:
+  use_wandb: true
+  project_name: "docvl-in"

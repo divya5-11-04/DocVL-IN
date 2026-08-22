@@ -1,0 +1,10 @@
+data/synthetic/
+data/processed/
+training/output/
+retrieval/index.pkl
+fonts/
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+wandb/
+.env
