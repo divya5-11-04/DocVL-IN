@@ -35,7 +35,7 @@ from schema import prompt_for  # noqa: E402
 def load_model(model_path: str):
     processor = AutoProcessor.from_pretrained(model_path)
     model = AutoModelForImageTextToText.from_pretrained(
-        model_path, torch_dtype=torch.bfloat16, device_map="auto"
+        model_path, dtype=torch.bfloat16, device_map="auto"
     )
     model.eval()
     return model, processor

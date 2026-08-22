@@ -57,7 +57,7 @@ def main():
     processor = AutoProcessor.from_pretrained(args.model)
 
     print("Loading unquantized model for baseline benchmark...")
-    fp_model = AutoModelForImageTextToText.from_pretrained(args.model, torch_dtype=torch.bfloat16, device_map="auto")
+    fp_model = AutoModelForImageTextToText.from_pretrained(args.model, dtype=torch.bfloat16, device_map="auto")
     fp_model.eval()
     fp_stats = benchmark(fp_model, processor, args.n_runs)
     del fp_model

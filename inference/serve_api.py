@@ -56,7 +56,7 @@ async def load_model():
     global _model, _processor, _request_queue
     model_path = MODEL_PATH if Path(MODEL_PATH).exists() else "Qwen/Qwen2-VL-2B-Instruct"
     _processor = AutoProcessor.from_pretrained(model_path)
-    _model = AutoModelForImageTextToText.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map="auto")
+    _model = AutoModelForImageTextToText.from_pretrained(model_path, dtype=torch.bfloat16, device_map="auto")
     _model.eval()
     _request_queue = asyncio.Queue()
     asyncio.create_task(_batch_worker())

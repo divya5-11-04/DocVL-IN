@@ -103,11 +103,26 @@ def collate_fn(batch, pad_token_id):
     return out
 
 
+def resolve_path(root: Path, p: str) -> str:
+    """Relative paths in config.yaml are relative to the repo root (the config file's
+    parent directory), never to the process's cwd — cwd is unreliable across notebook
+    cells, restarted sessions, and different invocation locations."""
+    p_path = Path(p)
+    return str(p_path if p_path.is_absolute() else root / p_path)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", type=str, default="config.yaml")
     args = ap.parse_args()
-    cfg = yaml.safe_load(open(args.config))
+    config_path = Path(args.config).resolve()
+    cfg = yaml.safe_load(open(config_path))
+    repo_root = config_path.parent.parent  # config.yaml lives in training/, repo root is one level up
+
+    cfg["data"]["train_manifest"] = resolve_path(repo_root, cfg["data"]["train_manifest"])
+    cfg["data"]["val_manifest"] = resolve_path(repo_root, cfg["data"]["val_manifest"])
+    cfg["data"]["image_root"] = resolve_path(repo_root, cfg["data"]["image_root"])
+    cfg["training"]["output_dir"] = resolve_path(repo_root, cfg["training"]["output_dir"])
 
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=cfg["model"]["load_in_4bit"],
@@ -120,7 +135,7 @@ def main():
     model = AutoModelForImageTextToText.from_pretrained(
         cfg["model"]["base_model"],
         quantization_config=bnb_config if cfg["model"]["load_in_4bit"] else None,
-        torch_dtype=torch.bfloat16,
+        dtype=torch.bfloat16,
         device_map="auto",
     )
 
