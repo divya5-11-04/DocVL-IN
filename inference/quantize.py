@@ -55,9 +55,11 @@ def main():
     args = ap.parse_args()
 
     processor = AutoProcessor.from_pretrained(args.model)
+    dtype = torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float16
+    print(f"Using {dtype} (bf16 requires Ampere+ GPU; falls back to fp16 on T4/P100)")
 
     print("Loading unquantized model for baseline benchmark...")
-    fp_model = AutoModelForImageTextToText.from_pretrained(args.model, dtype=torch.bfloat16, device_map="auto")
+    fp_model = AutoModelForImageTextToText.from_pretrained(args.model, dtype=dtype, device_map="auto")
     fp_model.eval()
     fp_stats = benchmark(fp_model, processor, args.n_runs)
     del fp_model
@@ -66,7 +68,7 @@ def main():
     print("Loading + saving 4-bit quantized model...")
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True, bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True,
+        bnb_4bit_compute_dtype=dtype, bnb_4bit_use_double_quant=True,
     )
     q_model = AutoModelForImageTextToText.from_pretrained(
         args.model, quantization_config=bnb_config, device_map="auto"

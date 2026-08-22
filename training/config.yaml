@@ -28,7 +28,8 @@ training:
   eval_steps: 100
   save_steps: 100
   save_total_limit: 3
-  bf16: true
+  # bf16/fp16 is chosen automatically at runtime based on GPU support (see finetune_lora.py) —
+  # not set here, since a fixed value would fail on GPUs that don't support bf16 (T4, P100).
   max_grad_norm: 1.0
   seed: 42
 

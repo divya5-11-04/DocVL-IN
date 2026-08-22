@@ -32,10 +32,16 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "data"))
 from schema import prompt_for  # noqa: E402
 
 
+def compute_dtype() -> torch.dtype:
+    """bf16 requires Ampere+ GPUs (A10/A100/3090+); free-tier GPUs (T4, P100) don't
+    support it, so detect at runtime instead of assuming."""
+    return torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float16
+
+
 def load_model(model_path: str):
     processor = AutoProcessor.from_pretrained(model_path)
     model = AutoModelForImageTextToText.from_pretrained(
-        model_path, dtype=torch.bfloat16, device_map="auto"
+        model_path, dtype=compute_dtype(), device_map="auto"
     )
     model.eval()
     return model, processor

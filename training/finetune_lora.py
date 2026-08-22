@@ -131,10 +131,17 @@ def main():
         os.environ["WANDB_MODE"] = "disabled"
         cfg["logging"]["use_wandb"] = False
 
+    # bf16 needs Ampere+ (A10/A100/3090 and newer). Free-tier GPUs (T4, P100) are older
+    # and don't support it — detect at runtime rather than hardcoding, so this runs
+    # correctly on whatever GPU is actually attached instead of erroring out.
+    use_bf16 = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+    compute_dtype = torch.bfloat16 if use_bf16 else torch.float16
+    print(f"GPU bf16 support: {use_bf16} -> using {compute_dtype} for model weights/training")
+
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=cfg["model"]["load_in_4bit"],
         bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16,
+        bnb_4bit_compute_dtype=compute_dtype,
         bnb_4bit_use_double_quant=True,
     )
 
@@ -142,7 +149,7 @@ def main():
     model = AutoModelForImageTextToText.from_pretrained(
         cfg["model"]["base_model"],
         quantization_config=bnb_config if cfg["model"]["load_in_4bit"] else None,
-        dtype=torch.bfloat16,
+        dtype=compute_dtype,
         device_map="auto",
     )
 
@@ -179,7 +186,8 @@ def main():
         eval_steps=cfg["training"]["eval_steps"],
         save_steps=cfg["training"]["save_steps"],
         save_total_limit=cfg["training"]["save_total_limit"],
-        bf16=cfg["training"]["bf16"],
+        bf16=use_bf16,
+        fp16=not use_bf16,
         max_grad_norm=cfg["training"]["max_grad_norm"],
         seed=cfg["training"]["seed"],
         report_to=["wandb"] if cfg["logging"]["use_wandb"] else [],
