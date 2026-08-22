@@ -25,7 +25,7 @@ import torch
 from jiwer import cer
 from PIL import Image
 from tqdm import tqdm
-from transformers import AutoProcessor, AutoModelForVision2Seq
+from transformers import AutoProcessor, AutoModelForImageTextToText
 
 import sys
 sys.path.append(str(Path(__file__).resolve().parent.parent / "data"))
@@ -34,7 +34,7 @@ from schema import prompt_for  # noqa: E402
 
 def load_model(model_path: str):
     processor = AutoProcessor.from_pretrained(model_path)
-    model = AutoModelForVision2Seq.from_pretrained(
+    model = AutoModelForImageTextToText.from_pretrained(
         model_path, torch_dtype=torch.bfloat16, device_map="auto"
     )
     model.eval()

@@ -28,7 +28,7 @@ import torch
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from PIL import Image
 from pydantic import BaseModel
-from transformers import AutoModelForVision2Seq, AutoProcessor
+from transformers import AutoModelForImageTextToText, AutoProcessor
 
 sys.path.append(str(Path(__file__).resolve().parent.parent / "data"))
 from schema import prompt_for, schema_for  # noqa: E402
@@ -56,7 +56,7 @@ async def load_model():
     global _model, _processor, _request_queue
     model_path = MODEL_PATH if Path(MODEL_PATH).exists() else "Qwen/Qwen2-VL-2B-Instruct"
     _processor = AutoProcessor.from_pretrained(model_path)
-    _model = AutoModelForVision2Seq.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map="auto")
+    _model = AutoModelForImageTextToText.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map="auto")
     _model.eval()
     _request_queue = asyncio.Queue()
     asyncio.create_task(_batch_worker())

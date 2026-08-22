@@ -13,7 +13,7 @@ from pathlib import Path
 
 import torch
 from PIL import Image
-from transformers import AutoProcessor, AutoModelForVision2Seq, BitsAndBytesConfig
+from transformers import AutoProcessor, AutoModelForImageTextToText, BitsAndBytesConfig
 
 
 def model_size_gb(model) -> float:
@@ -57,7 +57,7 @@ def main():
     processor = AutoProcessor.from_pretrained(args.model)
 
     print("Loading unquantized model for baseline benchmark...")
-    fp_model = AutoModelForVision2Seq.from_pretrained(args.model, torch_dtype=torch.bfloat16, device_map="auto")
+    fp_model = AutoModelForImageTextToText.from_pretrained(args.model, torch_dtype=torch.bfloat16, device_map="auto")
     fp_model.eval()
     fp_stats = benchmark(fp_model, processor, args.n_runs)
     del fp_model
@@ -68,7 +68,7 @@ def main():
         load_in_4bit=True, bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True,
     )
-    q_model = AutoModelForVision2Seq.from_pretrained(
+    q_model = AutoModelForImageTextToText.from_pretrained(
         args.model, quantization_config=bnb_config, device_map="auto"
     )
     q_model.eval()

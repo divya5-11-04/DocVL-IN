@@ -26,7 +26,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from transformers import (
     AutoProcessor,
-    AutoModelForVision2Seq,
+    AutoModelForImageTextToText,
     BitsAndBytesConfig,
     TrainingArguments,
     Trainer,
@@ -117,7 +117,7 @@ def main():
     )
 
     processor = AutoProcessor.from_pretrained(cfg["model"]["base_model"])
-    model = AutoModelForVision2Seq.from_pretrained(
+    model = AutoModelForImageTextToText.from_pretrained(
         cfg["model"]["base_model"],
         quantization_config=bnb_config if cfg["model"]["load_in_4bit"] else None,
         torch_dtype=torch.bfloat16,
