@@ -33,5 +33,6 @@ training:
   seed: 42
 
 logging:
-  use_wandb: false
+  use_wandb: false  # set true + provide WANDB_API_KEY env var to enable; otherwise training
+                     # would block waiting for an interactive login prompt in a subprocess cell
   project_name: "docvl-in"

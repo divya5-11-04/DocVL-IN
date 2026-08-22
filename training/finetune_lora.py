@@ -18,6 +18,7 @@ that debugging trail is part of the point of this project, not an inconvenience.
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 import torch
@@ -123,6 +124,12 @@ def main():
     cfg["data"]["val_manifest"] = resolve_path(repo_root, cfg["data"]["val_manifest"])
     cfg["data"]["image_root"] = resolve_path(repo_root, cfg["data"]["image_root"])
     cfg["training"]["output_dir"] = resolve_path(repo_root, cfg["training"]["output_dir"])
+
+    # Never let this block waiting on an interactive prompt (e.g. running as a subprocess
+    # cell in a notebook). W&B is opt-in only, and only actually used if a key is present.
+    if not cfg["logging"]["use_wandb"] or not os.environ.get("WANDB_API_KEY"):
+        os.environ["WANDB_MODE"] = "disabled"
+        cfg["logging"]["use_wandb"] = False
 
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=cfg["model"]["load_in_4bit"],
