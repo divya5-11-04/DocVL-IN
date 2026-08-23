@@ -53,9 +53,24 @@ class DocVLDataset(Dataset):
         return len(self.rows)
 
     def _load_image(self, rel_path: str) -> Image.Image:
+        """
+        Letterboxes every image onto an identical square canvas (max_image_size x
+        max_image_size), preserving aspect ratio via padding rather than stretching.
+
+        This matters specifically for Qwen2-VL (and similar native-resolution VLMs):
+        the vision encoder's patch count depends on each image's exact pixel
+        dimensions, so different-shaped inputs (e.g. a 900x1200 invoice vs a 900x570
+        ID card) produce different-length pixel_values tensors that can't be
+        torch.stack'd in a batch. Fixing every image to the same final canvas size
+        makes the patch grid identical across all examples, which is what a plain
+        stack-based collate function requires.
+        """
         img = Image.open(self.image_root / rel_path).convert("RGB")
         img.thumbnail((self.max_image_size, self.max_image_size))
-        return img
+        canvas = Image.new("RGB", (self.max_image_size, self.max_image_size), "white")
+        offset = ((self.max_image_size - img.width) // 2, (self.max_image_size - img.height) // 2)
+        canvas.paste(img, offset)
+        return canvas
 
     def __getitem__(self, idx):
         row = self.rows[idx]
@@ -84,8 +99,11 @@ class DocVLDataset(Dataset):
 
 
 def collate_fn(batch, pad_token_id):
-    """Pads variable-length sequences in a batch. Image tensors from most HF VLM
-    processors are already fixed-size per model, so only text fields need padding."""
+    """Pads variable-length text sequences in a batch. Image tensors (pixel_values,
+    image_grid_thw) are stacked directly — this requires every image to have been
+    resized to an identical canvas size upstream (see DocVLDataset._load_image);
+    Qwen2-VL and similar native-resolution VLMs produce different-shaped pixel_values
+    for different-shaped input images, so this only works because that's handled."""
     max_len = max(x["input_ids"].shape[0] for x in batch)
     out = {}
     for key in batch[0]:
